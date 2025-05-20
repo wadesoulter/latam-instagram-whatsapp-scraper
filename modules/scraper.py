@@ -1,32 +1,24 @@
 import instaloader
-import time
-import random
 
-def scrape_seed_users(seed_usernames, config):
+def init_loader(username):
     L = instaloader.Instaloader()
-    scraped_usernames = set()
+    try:
+        L.load_session_from_file(username)
+        print(f"[+] Logged in as {username}")
+    except FileNotFoundError:
+        print(f"[!] Session file for {username} not found.")
+    return L
 
-    for username in seed_usernames:
-        try:
-            profile = instaloader.Profile.from_username(L.context, username)
-
-            limit = config['scrape_limit']
-            delay_min = config['delay_range']['min']
-            delay_max = config['delay_range']['max']
-
-            for follower in profile.get_followers():
-                scraped_usernames.add(follower.username)
-                if len(scraped_usernames) >= limit:
-                    break
-                time.sleep(random.uniform(delay_min, delay_max))
-
-            for following in profile.get_followees():
-                scraped_usernames.add(following.username)
-                if len(scraped_usernames) >= limit:
-                    break
-                time.sleep(random.uniform(delay_min, delay_max))
-
-        except Exception as e:
-            print(f"[!] Error scraping {username}: {e}")
-
-    return list(scraped_usernames)
+def scrape_user_data(username):
+    L = init_loader("your_instagram_username")  # Replace this with your IG username
+    try:
+        profile = instaloader.Profile.from_username(L.context, username)
+        print(f"[+] Scraped {profile.username}: {profile.full_name}, {profile.followers} followers")
+        return {
+            "username": profile.username,
+            "full_name": profile.full_name,
+            "followers": profile.followers
+        }
+    except Exception as e:
+        print(f"[!] Error scraping {username}: {e}")
+        return None
